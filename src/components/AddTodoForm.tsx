@@ -3,7 +3,7 @@ import { useSetRecoilState } from "recoil";
 import { todoListState } from "../atoms/todoListState";
 
 const AddTodoForm = () => {
-  const [newTodo, setNewTodo] = useState("");
+  const [newTodo, setNewTodo] = useState<string>("");
   const setTodoList = useSetRecoilState(todoListState);
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
