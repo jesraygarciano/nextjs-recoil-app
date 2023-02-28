@@ -1,86 +1,102 @@
-import type { NextPage } from 'next'
-import Head from 'next/head'
-import Image from 'next/image'
+import React from "react";
+import { useSetRecoilState, useRecoilValue } from "recoil";
+import { todoListState, Todo } from "../lib/todoListState";
 
-const Home: NextPage = () => {
+type TodoItemProps = {
+  id: number;
+};
+
+const TodoItem = ({ id }: TodoItemProps) => {
+  const todo = useRecoilValue<Todo>(todoListState(id));
+  const setTodoList = useSetRecoilState<Todo[]>(todoListState);
+
+  const handleDelete = () => {
+    setTodoList((oldTodoList) => {
+      return oldTodoList.filter((todo) => todo.id !== id);
+    });
+  };
+
+  const handleCompleteToggle = () => {
+    setTodoList((oldTodoList) => {
+      const newTodoList = [...oldTodoList];
+      const index = newTodoList.findIndex((todo) => todo.id === id);
+      newTodoList[index] = {
+        ...todo,
+        isComplete: !todo.isComplete,
+      };
+      return newTodoList;
+    });
+  };
+
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center py-2">
-      <Head>
-        <title>Create Next App</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
+    <li className="flex items-center justify-between py-2">
+      <input
+        type="checkbox"
+        checked={todo.isComplete}
+        onChange={handleCompleteToggle}
+        className="mr-4"
+      />
+      <span className={todo.isComplete ? "line-through" : ""}>{todo.text}</span>
+      <button onClick={handleDelete} className="text-red-500">
+        Delete
+      </button>
+    </li>
+  );
+};
 
-      <main className="flex w-full flex-1 flex-col items-center justify-center px-20 text-center">
-        <h1 className="text-6xl font-bold">
-          Welcome to{' '}
-          <a className="text-blue-600" href="https://nextjs.org">
-            Next.js!
-          </a>
-        </h1>
+const TodoList = () => {
+  const todoList = useRecoilValue<Todo[]>(todoListState);
 
-        <p className="mt-3 text-2xl">
-          Get started by editing{' '}
-          <code className="rounded-md bg-gray-100 p-3 font-mono text-lg">
-            pages/index.tsx
-          </code>
-        </p>
+  return (
+    <ul className="mt-4">
+      {todoList.map((todo) => (
+        <TodoItem key={todo.id} id={todo.id} />
+      ))}
+    </ul>
+  );
+};
 
-        <div className="mt-6 flex max-w-4xl flex-wrap items-center justify-around sm:w-full">
-          <a
-            href="https://nextjs.org/docs"
-            className="mt-6 w-96 rounded-xl border p-6 text-left hover:text-blue-600 focus:text-blue-600"
-          >
-            <h3 className="text-2xl font-bold">Documentation &rarr;</h3>
-            <p className="mt-4 text-xl">
-              Find in-depth information about Next.js features and its API.
-            </p>
-          </a>
+const AddTodoForm = () => {
+  const [text, setText] = React.useState<string>("");
+  const setTodoList = useSetRecoilState<Todo[]>(todoListState);
 
-          <a
-            href="https://nextjs.org/learn"
-            className="mt-6 w-96 rounded-xl border p-6 text-left hover:text-blue-600 focus:text-blue-600"
-          >
-            <h3 className="text-2xl font-bold">Learn &rarr;</h3>
-            <p className="mt-4 text-xl">
-              Learn about Next.js in an interactive course with quizzes!
-            </p>
-          </a>
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!text.trim()) return;
+    setTodoList((oldTodoList) => [
+      ...oldTodoList,
+      {
+        id: Date.now(),
+        text,
+        isComplete: false,
+      },
+    ]);
+    setText("");
+  };
 
-          <a
-            href="https://github.com/vercel/next.js/tree/canary/examples"
-            className="mt-6 w-96 rounded-xl border p-6 text-left hover:text-blue-600 focus:text-blue-600"
-          >
-            <h3 className="text-2xl font-bold">Examples &rarr;</h3>
-            <p className="mt-4 text-xl">
-              Discover and deploy boilerplate example Next.js projects.
-            </p>
-          </a>
+  return (
+    <form onSubmit={handleSubmit} className="mt-8">
+      <input
+        type="text"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        className="border p-2 rounded w-full"
+      />
+      <button className="bg-green-500 text-white p-2 rounded ml-4">
+        Add Todo
+      </button>
+    </form>
+  );
+};
 
-          <a
-            href="https://vercel.com/import?filter=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className="mt-6 w-96 rounded-xl border p-6 text-left hover:text-blue-600 focus:text-blue-600"
-          >
-            <h3 className="text-2xl font-bold">Deploy &rarr;</h3>
-            <p className="mt-4 text-xl">
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
-        </div>
-      </main>
-
-      <footer className="flex h-24 w-full items-center justify-center border-t">
-        <a
-          className="flex items-center justify-center gap-2"
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <Image src="/vercel.svg" alt="Vercel Logo" width={72} height={16} />
-        </a>
-      </footer>
+const Home = () => {
+  return (
+    <div className="max-w-lg mx-auto my-8">
+      <h1 className="text-2xl font-bold mb-4">Todo App</h1>
+      <AddTodoForm />
+      <TodoList />
     </div>
-  )
-}
+  );
+};
 
-export default Home
+export default Home;
